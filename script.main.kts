@@ -21,9 +21,10 @@ if (!folder.exists() || !folder.isDirectory) {
     exitProcess(1)
 }
 
-// Only inspect top-level files (maxDepth 1) to avoid modifying subfolders or backups
 folder.walk().maxDepth(1)
-    .filter { it.isFile && it.extension.equals("mp4", ignoreCase = true) }
+    .filter { file ->
+        file.isFile && file.extension.equals("mp4", ignoreCase = true)
+    }
     .forEach { file ->
         val renamed = cleanFileName(file.name, "Valorant")
         if (file.name != renamed) {
