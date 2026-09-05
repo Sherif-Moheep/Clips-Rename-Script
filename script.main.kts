@@ -1,5 +1,5 @@
 #!/usr/bin/env kotlin
-@file:DependsOn("com.github.ajalt.clikt:clikt-jvm:5.0.3")
+@file:DependsOn("com.github.ajalt.clikt:clikt-jvm:5.1.0")
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.main
@@ -9,6 +9,8 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
+import com.github.ajalt.mordant.rendering.TextColors
+import com.github.ajalt.mordant.rendering.TextStyles
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -68,7 +70,7 @@ class RenameClips : CliktCommand(name = "rename-clips") {
         val folder = File(targetFolder)
 
         if (!folder.exists() || !folder.isDirectory) {
-            System.err.println("Error: Directory not found: ${folder.absolutePath}")
+            echo("${TextColors.red("✖ Error:")} Directory not found: ${folder.absolutePath}", err = true)
             exitProcess(1)
         }
 
@@ -90,14 +92,14 @@ class RenameClips : CliktCommand(name = "rename-clips") {
                 if (file.name != renamed) {
                     val destination = File(file.parentFile ?: folder, renamed)
                     if (dryRun) {
-                        println("[DRY RUN] Would rename: ${file.name} -> $renamed")
+                        echo("${TextColors.yellow("ℹ  [DRY RUN]")} ${TextColors.gray(file.name)} ${TextColors.gray("->")} ${TextColors.cyan(renamed)}")
                         renamedCount++
                     } else {
                         if (file.renameTo(destination)) {
-                            println("Renamed: ${file.name} -> $renamed")
+                            echo("${TextColors.green("✔  Renamed:")} ${TextColors.gray(file.name)} ${TextColors.gray("->")} ${TextColors.brightWhite(TextStyles.bold(renamed))}")
                             renamedCount++
                         } else {
-                            System.err.println("Failed to rename: ${file.name} (file may be in use or destination already exists)")
+                            echo("${TextColors.red("✖  Failed to rename:")} ${TextColors.gray(file.name)} (file may be in use or destination already exists)", err = true)
                             errorCount++
                         }
                     }
@@ -105,7 +107,12 @@ class RenameClips : CliktCommand(name = "rename-clips") {
             }
 
         if (dryRun) {
-            println("Dry run complete: $renamedCount file(s) would be renamed.")
+            echo("${TextColors.yellow("Summary:")} $renamedCount clip(s) would be renamed.")
+        } else if (renamedCount > 0 || errorCount > 0) {
+            val failureText = if (errorCount > 0) ", ${TextColors.red("$errorCount failed")}" else ""
+            echo("${TextColors.green("Summary:")} $renamedCount clip(s) renamed$failureText.")
+        } else {
+            echo(TextColors.gray("No matching clips found to rename."))
         }
     }
 }
